@@ -1,0 +1,404 @@
+---
+title: 'Data Lab 1: Introduction to R Shiny'
+subtitle: 'Health Data Science DASC505: Actionable Analytics'
+author: "Alex Alexiou, Chris Kypridemos"
+date: "22/01/2022"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T)
+
+```
+
+```{r global, include= FALSE}
+library(shiny)
+```
+
+<br>
+
+### 1. The shiny library
+
+[Shiny](https://shiny.rstudio.com/) is an R package, developed by RStudio, that makes it easy to build interactive web apps, such as [dashboards](https://shiny.rstudio.com/gallery/hospital-data-antimicrobial.html), straight from R. These can be either standalone apps on a webpage or embedded in R Markdown documents. In this practical we will focus on the basics, but we should mention that _Shiny_, supports several extensions, including [CSS](https://www.w3schools.com/css/) themes, [htmlwidgets](http://www.htmlwidgets.org/), and [JavaScript](https://github.com/daattali/shinyjs/blob/master/README.md). 
+
+RStudio offers a number of online lessons and tutorials on Shiny that we encourage you to look into, including a [video tutorial](https://shiny.rstudio.com/tutorial/) and a text-based [seven lesson tutorial](https://shiny.rstudio.com/tutorial/written-tutorial/lesson1/) that starts from the basics of the _Shiny_ library.
+
+While you can run a Shiny app directly from your local machine, it is worth pointing out that it will not be accessible to external users, unless you run your app on a server. To put your Shiny app on the web, you can choose to deploy on your own servers or on a hosting service. Depending on the app, some methods are easier but cost more; others are cheap but take more time and effort. RStudio offers [hosting services](https://shiny.rstudio.com/deploy/), but these come at a premium. There is a free license available, albeit very limited.
+
+<br>
+
+#### 1.2 Installing
+
+You can install `shiny` directly from the CRAN repository. If you don't remember how to do that, type:
+
+```{r, eval = F}
+install.packages("shiny")
+```
+
+
+Alternatively, you can also install the library from RStudio, from `Tools > Install Packages...` and typing `shiny` in the text box.
+
+Now that we have installed shiny into R, we can load the library and see at a few examples.
+
+```{r, eval = F}
+library(shiny)
+```
+
+<br>
+
+#### 1.2 App examples
+
+
+The built-in examples below show several ways that `shiny` can be used to visualise and analyse data in various settings, such as with graphs and tables. 
+
+Shiny offers a number of interactive objects for user input that most people should be familiar with, such as drop-down lists, sliders, buttons, text-boxes, etc. These are called [widgets](https://shiny.rstudio.com/gallery/widget-gallery.html), and there is a wide range one can choose from.
+
+Let's see one example by using `shiny` to show a histogram with some basic user interaction functionality using a slider widget. This will not run within this page, so copy-paste it in your R console instead.
+
+```{r, eval = F}
+runExample("01_hello")
+```
+
+In the first example, a slider is used that interacts with the number of bins in the histogram. Users can change the number of bins with the slider bar, and the app will immediately respond to their input with automatic updates to the webpage.
+
+In example no. 2, we will look at numeric inputs and drop-down lists (a.k.a. select boxes). This example demonstrates how to visualise raw data, such as tables, within the app, as well as how to produce descriptive statistics of said variables using R's built-in `summary()` function.
+
+```{r, eval=F}
+runExample("02_text")
+```
+
+Notice how the script used to reproduce this example is included at the bottom of the page. Such example apps are useful to look through when you are having trouble designing your app, and you need some ideas on the design or how to implement a specific functionality. At the time of writing there are 11 such "tutorials" included in the library, each covering a specific topic. You can find out which these are by running:
+
+```{r, eval=T}
+runExample()
+```
+
+
+A lot more examples can be found online, including RStudio's [Gallery](https://shiny.rstudio.com/gallery/), where you can find a large number of apps developed by the community - including the code to build them.
+
+<br>
+
+### 2. Building your own app
+
+<br>
+
+#### 2.1 The Basics
+
+Let's explore first the structure of a Shiny application. Shiny apps are normally contained in a single script called `app.R`. 
+
+The script `app.R` has three components:
+
+1. a user interface (UI) function that creates an object detailing how the app _looks_,
+
+2. a server function (Server) that details how the app _functions_; and 
+
+3. a call to the `shinyApp` function using the UI and Server specified to create the app.
+
+The user interface function defines the layout and appearance of your app; such as if it has any buttons, sliders or other input objects that control features of the app. In the fist example, a slider object `sliderInput` offers the way for the user to pick a value for the number of bins in the histogram.
+
+The server function contains the instructions that tells your computer how to react to the user input; for instance, in the first _"01_hello"_ example above, you can tell the server to render a plot with the number of bins equal to the number picked from the slider. The plot is  **reactive** to the user input using the `renderPlot` function; once the value of the slider changes, the plot will be updated with the new number of bins. 
+
+The `shinyApp`function simply creates the app objects from an explicit UI/Server pair. Essentially just one line of code is normally needed to run the app, in the way of `shinyApp(ui, server)`.
+
+<br>
+
+#### 2.2 Structure of the app.R script 
+
+Now that you have a basic understanding on what `shiny` can do, let's try to create an app ourselves. You can use the following starting structure for the `app.R`.
+
+```{r, eval=F}
+# Define UI 
+my_ui <- fluidPage()
+
+# Define logic (functionality)
+my_server <- function(input, output) {}
+
+# Run the app
+shinyApp(ui = my_ui, server = my_server)
+```
+
+If you run this bit of code you will notice that you just get an empty page; that's normal since we haven't added anything within each function yet. 
+
+<br>
+
+#### 2.3 App layout
+
+Let's start by looking at the `ui` object. This is defined by the function `fluidpage()`.
+
+Shiny uses the `fluidPage` function to create a page that automatically adjusts to the user's browser window dimensions. Furthermore, it automatically places _elements_, based on some pre-defined topology (sort of like a template) that dictate how the page will look. These _elements_ can be the title, the main panel, the side panel, etc. Note that these elements are placed within the `fluidPage` function. We will use `fluidPage()` in this practical from simplicity, but it's worth mentioning there are other more involved methods that you can use to make an app layout.
+
+We usually put inputs on a side panel (lists, buttons, etc.) and outputs on the main panel, like so:
+
+```{r, eval=T}
+# Define UI 
+my_ui <- fluidPage(
+  titlePanel("title panel"), # the label/name of the panel, optional
+  
+  sidebarLayout(
+    
+    sidebarPanel("sidebar panel"), # the label/name of the side panel, optional
+    
+    mainPanel("main panel")  # the label/name of the main panel, optional
+    ) 
+  )
+
+# Define logic (functionality)
+my_server <- function(input, output) {
+  # Things to do here 
+}
+
+# Run the app
+shinyApp(ui = my_ui, server = my_server)
+```
+
+<br>
+
+#### 2.4 Interactive text example
+
+You should now have a basic understanding of the page layout, so we will remove the panel names from now on. We will expand this app by adding some functionality. 
+
+Let's try adding a slider in the side panel, and printing the value the user picks from the slider to the main panel.
+
+```{r, eval=T}
+# Define UI 
+my_ui <- fluidPage(
+
+  sidebarLayout(
+    
+    sidebarPanel(
+      sliderInput(inputId = "my_slider", # internal ID name
+                  label = "pick a number:", # your label
+                  min = 1, # Min value available
+                  max = 50, # Max value available
+                  value = 30)), # the starting value
+    
+    mainPanel(
+      textOutput(outputId = "selected_number"))
+    )
+  )
+
+# Define logic (functionality)
+my_server <- function(input, output) {
+  
+  output$selected_number <- renderText(
+    paste("You have selected the number ", input$my_slider))
+  
+  }
+
+# Run the app
+shinyApp(ui = my_ui, server = my_server)
+```
+
+Notice the changes we have made to the app above:
+
+1. We have changed the `mainPanel()` to include a text output that we named `selected_number`, i.e. `textOutput(outputId = "selected_number")`
+2. Within the server function we specified that the `selected_number` object would be a text equal to the value specified in the slider, `input$my_slider`.
+
+Usually, interactive outputs - i.e. outputs that we would like to be updated based on user's inputs or other conditions - should be made using Shiny’s *render* functions. In the case above, that's the `renderText()` function. Other such functions include the `renderPlot()` function that outputs a graph / plot, and `renderTable()` function that outputs a table. There are various bespoken render functions for other types of outputs; for instance, `renderDataTable()` for `data.table` and `renderPlotly()` for rendering `plotly` outputs respectively.
+
+<br>
+
+#### 2.5 Interactive plot example
+
+Next, we will add a plot output in the `mainPanel` to plot a histogram of the [iris](https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/iris.html) dataset, with the number of bins equal to the number selected on the slider. We also make a few minor adjustments, such as labels, to follow this scenario.
+
+```{r, eval=T}
+
+# Note that we can run any code at the start of the app.R script 
+# and it will be used by the shiny app like normal code would. 
+# That includes declaring any libraries that are needed 
+# for the app to run, such as library(shiny).
+
+# Define plot data 
+x <- iris$Petal.Length
+
+
+# Define UI 
+my_ui <- fluidPage(
+
+  sidebarLayout(
+    
+    sidebarPanel(sliderInput(inputId = "my_slider", # internal ID name
+                  label = "Select number of bins:", # your label
+                  min = 1, # Min value available
+                  max = 30, # Max value available
+                  value = 20)), # the starting value
+    
+    mainPanel(textOutput(outputId = "selected_number"),
+      plotOutput(outputId = "hist_plot"))
+  )
+)
+
+# Define logic (functionality)
+my_server <- function(input, output) {
+  
+  output$selected_number <- renderText(
+    paste("You have selected ", input$my_slider, " bins")
+    )
+  
+  output$hist_plot <- renderPlot( {
+
+        # Define number of bins to use
+        bins <- seq(min(x), max(x), length.out = input$my_slider + 1)
+        # Plot histogram
+        hist(x, breaks = bins, col = "lightgreen", border = "white",
+             xlab = "cm",
+             main = "Histogram of petal length for the flowers of the iris family")
+        }
+    )
+
+}
+
+# Run the app
+shinyApp(ui = my_ui, server = my_server)
+```
+
+Things to note:
+
++ We can declare which data we are using at the start of the script, since this does not have to be reactive. In fact, any bit of code written at the top will run first; that includes any libraries that may be needed for the app to run, such as `library(shiny)` or `library(data.table)`. 
++ Notice how the two outputs just stack on top of each other. That's done automatically. 
++ Try adjusting the size of the window (webpage) and see what happens to the app layout.
+
+<br>
+
+#### 2.6 Multiple plots
+
+We made this example for one variable _petal length_. We can now explore how we can include other variables of the flowers, such as _petal width_. Take a look at the `iris` dataset:
+
+```{r, eval=T}
+head(iris)
+```
+
+We can make a drop-down list where the user can select the variable to plot. We can do this by adding another widget in the sidepanel. Furthermore, the slider has a label that is pretty much self-explanatory, so we will remove the text output from the next example. 
+
+Instead, we will add a bit of *reactive* code before the output plot is rendered. Reactive expressions are expressions that can read reactive values and call other reactive expressions, using the function `reactive()`. 
+
+For this we will make a new variable called `variableInput`, which changes based on the input of the `my_variable` selector. Essentially, we are telling R that if the user's choice is "Petal Length", then `variableInput` is equal to `iris$Petal.Length`; if the choice is "Sepal Width", then `variableInput` is equal to `iris$Sepal.Width`, etc. We can make this _switch_ easily using base R's `switch()` function.
+
+
+```{r, eval=T}
+my_ui <- fluidPage(
+
+  sidebarLayout(
+    
+    sidebarPanel(
+      
+      # Input: Selector for choosing dataset 
+      selectInput(inputId = "my_variable",  # internal ID name
+                label = "Choose a variable:", # your label
+                choices = c("Petal Length", "Petal Width", "Sepal Length", "Sepal Width")),
+      
+      # Input: Slider for choosing number of bins 
+      sliderInput(inputId = "my_slider", # internal ID name
+                  label = "Select number of bins:", # your label
+                  min = 1, # Min value available
+                  max = 30, # Max value available
+                  value = 20)), # the starting value
+    
+    mainPanel(
+      plotOutput(outputId = "hist_plot"))
+  )
+)
+
+# Define logic (functionality)
+my_server <- function(input, output) {
+  
+  # Return the requested variable
+  variableInput <- reactive({
+    switch(input$my_variable,
+           "Petal Length" = iris$Petal.Length,
+           "Petal Width" = iris$Petal.Width,
+           "Sepal Length" = iris$Sepal.Length,
+           "Sepal Width" = iris$Sepal.Width)
+  })
+  
+  output$hist_plot <- renderPlot( {
+        x <- variableInput()
+        bins <- seq(min(x), max(x), length.out = input$my_slider + 1)
+        hist(x, breaks = bins, col = "lightgreen", border = "white",
+             xlab = "cm",
+             main = paste("Histogram of", input$my_variable ,"for the flowers of the iris family"))
+        }
+    )
+
+}
+
+# Run the app
+shinyApp(ui = my_ui, server = my_server)
+```
+
+Notice how we plot variable `x`, where `x <- variableInput()` **inside** the `renderPlot()` function. That's because we want the dataset plotted to be reactive to user input, instead of constant.
+
+<br>
+
+### 3. Towards more complex apps: modelling disease spread 
+
+Consider the following scenario: 
+Suppose that you are health data scientist at the start of the COVID-19 pandemic. Assume that your task is to create a simple model and create an app that will show the model's prediction on how SARS-CoV-2 will likely progress within the region based on user-specified model parameters.  
+
+For this case, suppose you would need to calculate a fundamental epidemiological model - the _SIR_ model for infectious disease spread. The name is based on the terms:
+
++ _Susceptible_, 
++ _Infectious_ and 
++ _Removed_ (recovered or dead) individuals. 
+
+The SIR is a simple compartmental model, meaning individuals move from one of the three **S**, **I** or **R** compartments to the next as time progresses and the disease spreads within the population. It is most commonly used to model disease herd immunity, although real-world applications utilise extended SIR models that are more complex and less deterministic. 
+
+The model requires the following parameters to be calculated:
+
++ _Infectious period_: Number of days being infectious.
++ _R naught_:  Basic reproduction number.
+
+These two parameters capture the rate of flow from susceptible to infected, and infected to recovered (or dead).
+
+For simplicity, we assume that there is no _latent_ period for the disease, i.e. the number of days between being infected and becoming infectious is zero. That would be the generalised _SEIR_ model (Susceptible-Exposed-Infectious-Removed). More information on epidemic models can be found in this paper [here](https://idss.mit.edu/wp-content/uploads/2020/04/04.28.2020Epidemic_Modeling_A_Memo.pdf).
+
+Furthermore, we need to include a few more parameters, depending on the scenario we are trying to model.
+
++ Total population and initially infected population: the total population of the area and the number of initially infected at the start of the time period (can be 1 or more, depending on the scenario). 
++ Time period: The total time period for which we will run the model.
+
+The model can be calculated using a set of differential equations. Thankfully, calculation of the model is included in the `EpiDynamics` library.
+
+```{r, eval = F}
+install.packages("EpiDynamics")
+```
+
+Below is an example on how to calculate a simple SIR model for Liverpool, given the initial conditions and assuming that a 4 people become initially infected.
+
+```{r, eval = T}
+library(EpiDynamics)
+
+infectious_period <- 7.0 # Days infectious
+R0 <- 2.4 # Basic reproduction number in the absence of interventions
+
+liv_pop <- 496784 # Total population of Liverpool
+liv_infected <- 4 # Population that start the pandemic
+time_period <- 120 # # Total time modeled (days)
+
+# Calculations
+parameters <- c(beta = R0/infectious_period, gamma = 1/infectious_period)
+initials <- c(S = 1-(liv_infected / liv_pop), I = liv_infected / liv_pop, R = 0) 
+
+# Solve and plot
+sir <- SIR(pars = parameters, init = initials, time = 0:time_period)
+PlotMods(sir)
+```
+
+One of the most influential parameters is the value of **R0** - the basic reproduction number. R naught tells us how contagious an infectious disease is, defined as the average number of people who will contract the disease from one infectious person.
+
+Suppose the scope of our analysis is to produce an app that enables the user to adjust model parameters, particularly R0, to account for interventions that have an effect on the reproduction number, such as lockdown measures. Furthermore, crude estimations of hospitalisation rates could be derived, showing us at which point the local health care system will be over capacity. 
+
+Using what we learned so far, you should use a set of input elements (textboxes, dropdown lists, etc.) accounting for the model parameters, and output the model results. We will look at how we can do this more closely in the following practical, but until then, try to think how you would approach this task; what information needs to be input by the user and what information the app needs to output.
+
+<br>
+
+### 4. Further reading
+
+_R shiny written tutorials_ (2020). RStudio Inc. Available at: https://shiny.rstudio.com/tutorial/written-tutorial/lesson1/.
+
+Wickham, H. (2021). _Mastering shiny_. O'Reilly Media, Inc. Available at: https://mastering-shiny.org/. 
+
+Abadie, A., Bertolotti, P., & Arnab, B. D. (2020). _Epidemic modeling and estimation_. Available at: https://idss.mit.edu/wp-content/uploads/2020/04/04.28.2020Epidemic_Modeling_A_Memo.pdf.
+
